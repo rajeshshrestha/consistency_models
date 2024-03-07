@@ -6,7 +6,7 @@ import io
 import os
 import socket
 
-import blobfile as bf
+# import blobfile as bf
 from mpi4py import MPI
 import torch as th
 import torch.distributed as dist
@@ -24,7 +24,7 @@ def setup_dist():
     """
     if dist.is_initialized():
         return
-    os.environ["CUDA_VISIBLE_DEVICES"] = f"{MPI.COMM_WORLD.Get_rank() % GPUS_PER_NODE}"
+    os.environ["CUDA_VISIBLE_DEVICES"] = os.getenv("CUDA_VISIBLE_DEVICES", f"{MPI.COMM_WORLD.Get_rank() % GPUS_PER_NODE}")
 
     comm = MPI.COMM_WORLD
     backend = "gloo" if not th.cuda.is_available() else "nccl"
@@ -57,7 +57,7 @@ def load_state_dict(path, **kwargs):
     """
     chunk_size = 2**30  # MPI has a relatively small size limit
     if MPI.COMM_WORLD.Get_rank() == 0:
-        with bf.BlobFile(path, "rb") as f:
+        with open(path, "rb") as f:
             data = f.read()
         num_chunks = len(data) // chunk_size
         if len(data) % chunk_size:

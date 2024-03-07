@@ -2,7 +2,7 @@ import copy
 import functools
 import os
 
-import blobfile as bf
+# import blobfile as os
 import torch as th
 import torch.distributed as dist
 from torch.nn.parallel.distributed import DistributedDataParallel as DDP
@@ -150,10 +150,10 @@ class TrainLoop:
 
     def _load_optimizer_state(self):
         main_checkpoint = find_resume_checkpoint() or self.resume_checkpoint
-        opt_checkpoint = bf.join(
-            bf.dirname(main_checkpoint), f"opt{self.resume_step:06}.pt"
+        opt_checkpoint = os.path.join(
+            os.path.dirname(main_checkpoint), f"opt{self.resume_step:06}.pt"
         )
-        if bf.exists(opt_checkpoint):
+        if os.path.exists(opt_checkpoint):
             logger.log(f"loading optimizer state from checkpoint: {opt_checkpoint}")
             state_dict = dist_util.load_state_dict(
                 opt_checkpoint, map_location=dist_util.dev()
@@ -245,15 +245,15 @@ class TrainLoop:
                     filename = f"model{(self.step+self.resume_step):06d}.pt"
                 else:
                     filename = f"ema_{rate}_{(self.step+self.resume_step):06d}.pt"
-                with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
+                with open(os.path.join(get_blob_logdir(), filename), "wb") as f:
                     th.save(state_dict, f)
 
         for rate, params in zip(self.ema_rate, self.ema_params):
             save_checkpoint(rate, params)
 
         if dist.get_rank() == 0:
-            with bf.BlobFile(
-                bf.join(get_blob_logdir(), f"opt{(self.step+self.resume_step):06d}.pt"),
+            with open(
+                os.path.join(get_blob_logdir(), f"opt{(self.step+self.resume_step):06d}.pt"),
                 "wb",
             ) as f:
                 th.save(self.opt.state_dict(), f)
@@ -323,7 +323,7 @@ class CMTrainLoop(TrainLoop):
             path, name = os.path.split(resume_checkpoint)
             target_name = name.replace("model", "target_model")
             resume_target_checkpoint = os.path.join(path, target_name)
-            if bf.exists(resume_target_checkpoint) and dist.get_rank() == 0:
+            if os.path.exists(resume_target_checkpoint) and dist.get_rank() == 0:
                 logger.log(
                     "loading model from checkpoint: {resume_target_checkpoint}..."
                 )
@@ -343,7 +343,7 @@ class CMTrainLoop(TrainLoop):
             teacher_name = name.replace("model", "teacher_model")
             resume_teacher_checkpoint = os.path.join(path, teacher_name)
 
-            if bf.exists(resume_teacher_checkpoint) and dist.get_rank() == 0:
+            if os.path.exists(resume_teacher_checkpoint) and dist.get_rank() == 0:
                 logger.log(
                     "loading model from checkpoint: {resume_teacher_checkpoint}..."
                 )
@@ -363,6 +363,7 @@ class CMTrainLoop(TrainLoop):
             or self.step < self.lr_anneal_steps
             or self.global_step < self.total_training_steps
         ):
+            # print(self.global_step)
             batch, cond = next(self.data)
             self.run_step(batch, cond)
             saved = False
@@ -516,7 +517,6 @@ class CMTrainLoop(TrainLoop):
             self.mp_trainer.backward(loss)
 
     def save(self):
-        import blobfile as bf
 
         step = self.global_step
 
@@ -528,7 +528,7 @@ class CMTrainLoop(TrainLoop):
                     filename = f"model{step:06d}.pt"
                 else:
                     filename = f"ema_{rate}_{step:06d}.pt"
-                with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
+                with open(os.path.join(get_blob_logdir(), filename), "wb") as f:
                     th.save(state_dict, f)
 
         for rate, params in zip(self.ema_rate, self.ema_params):
@@ -536,8 +536,8 @@ class CMTrainLoop(TrainLoop):
 
         logger.log("saving optimizer state...")
         if dist.get_rank() == 0:
-            with bf.BlobFile(
-                bf.join(get_blob_logdir(), f"opt{step:06d}.pt"),
+            with open(
+                os.path.join(get_blob_logdir(), f"opt{step:06d}.pt"),
                 "wb",
             ) as f:
                 th.save(self.opt.state_dict(), f)
@@ -546,12 +546,12 @@ class CMTrainLoop(TrainLoop):
             if self.target_model:
                 logger.log("saving target model state")
                 filename = f"target_model{step:06d}.pt"
-                with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
+                with open(os.path.join(get_blob_logdir(), filename), "wb") as f:
                     th.save(self.target_model.state_dict(), f)
             if self.teacher_model and self.training_mode == "progdist":
                 logger.log("saving teacher model state")
                 filename = f"teacher_model{step:06d}.pt"
-                with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
+                with open(os.path.join(get_blob_logdir(), filename), "wb") as f:
                     th.save(self.teacher_model.state_dict(), f)
 
         # Save model parameters last to prevent race conditions where a restart
@@ -596,8 +596,8 @@ def find_ema_checkpoint(main_checkpoint, step, rate):
     if main_checkpoint is None:
         return None
     filename = f"ema_{rate}_{(step):06d}.pt"
-    path = bf.join(bf.dirname(main_checkpoint), filename)
-    if bf.exists(path):
+    path = os.path.join(os.path.dirname(main_checkpoint), filename)
+    if os.path.exists(path):
         return path
     return None
 

@@ -1,5 +1,6 @@
+import os
 from .inception_v3 import InceptionV3
-import blobfile as bf
+# import blobfile as bf
 import torch
 import torch.distributed as dist
 import torch.nn as nn
@@ -86,7 +87,7 @@ class FIDAndIS:
         self.softmax_batch_size = softmax_batch_size
         self.clip_score_batch_size = clip_score_batch_size
         self.inception = InceptionV3()
-        with bf.BlobFile(path, "rb") as f:
+        with open(path, "rb") as f:
             self.inception.load_state_dict(torch.load(f))
         self.inception.eval()
         self.inception.to(dist_util.dev())
@@ -282,7 +283,7 @@ class FIDAndIS:
             return None, dict()
 
     def set_ref_batch(self, ref_batch):
-        with bf.BlobFile(ref_batch, "rb") as f:
+        with open(ref_batch, "rb") as f:
             data = np.load(f)
             fid_stats = FIDStatistics(mu=data["mu"], sigma=data["sigma"], resolution=-1)
             spatial_stats = FIDStatistics(

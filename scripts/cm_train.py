@@ -3,6 +3,7 @@ Train a diffusion model on images.
 """
 
 import argparse
+import os
 
 from cm import dist_util, logger
 from cm.image_datasets import load_data
@@ -24,7 +25,7 @@ def main():
     args = create_argparser().parse_args()
 
     dist_util.setup_dist()
-    logger.configure()
+    logger.configure(dir="/scratch/shresthr/AI539-AdvancedPGM/tmp")
 
     logger.log("creating model and diffusion...")
     ema_scale_fn = create_ema_and_scales_fn(

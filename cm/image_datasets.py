@@ -1,8 +1,9 @@
 import math
 import random
+import os
 
 from PIL import Image
-import blobfile as bf
+# import blobfile as bf
 from mpi4py import MPI
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
@@ -39,11 +40,13 @@ def load_data(
     if not data_dir:
         raise ValueError("unspecified data directory")
     all_files = _list_image_files_recursively(data_dir)
+    # print(all_files)
+    # exit()
     classes = None
     if class_cond:
         # Assume classes are the first part of the filename,
         # before an underscore.
-        class_names = [bf.basename(path).split("_")[0] for path in all_files]
+        class_names = [os.path.basename(path).split("_")[0] for path in all_files]
         sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
         classes = [sorted_classes[x] for x in class_names]
     dataset = ImageDataset(
@@ -69,12 +72,12 @@ def load_data(
 
 def _list_image_files_recursively(data_dir):
     results = []
-    for entry in sorted(bf.listdir(data_dir)):
-        full_path = bf.join(data_dir, entry)
+    for entry in sorted(os.listdir(data_dir)):
+        full_path = os.path.join(data_dir, entry)
         ext = entry.split(".")[-1]
         if "." in entry and ext.lower() in ["jpg", "jpeg", "png", "gif"]:
             results.append(full_path)
-        elif bf.isdir(full_path):
+        elif os.path.isdir(full_path):
             results.extend(_list_image_files_recursively(full_path))
     return results
 
@@ -102,7 +105,7 @@ class ImageDataset(Dataset):
 
     def __getitem__(self, idx):
         path = self.local_images[idx]
-        with bf.BlobFile(path, "rb") as f:
+        with open(path, "rb") as f:
             pil_image = Image.open(f)
             pil_image.load()
         pil_image = pil_image.convert("RGB")
