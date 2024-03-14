@@ -192,7 +192,7 @@ class TrainLoop:
                 k: v[i : i + self.microbatch].to(dist_util.dev())
                 for k, v in cond.items()
             }
-            last_batch = (i + self.microbatch) >= batch.shape[0]
+            last_batch = (i + self.microbatch) >= batch.shape[0] # * Flag denoting the last microbatch
             t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
 
             compute_losses = functools.partial(
@@ -359,8 +359,8 @@ class CMTrainLoop(TrainLoop):
     def run_loop(self):
         saved = False
         while (
-            not self.lr_anneal_steps
-            or self.step < self.lr_anneal_steps
+            (not self.lr_anneal_steps
+            and self.step < self.lr_anneal_steps)
             or self.global_step < self.total_training_steps
         ):
             # print(self.global_step)
@@ -450,7 +450,7 @@ class CMTrainLoop(TrainLoop):
                 k: v[i : i + self.microbatch].to(dist_util.dev())
                 for k, v in cond.items()
             }
-            last_batch = (i + self.microbatch) >= batch.shape[0]
+            last_batch = (i + self.microbatch) >= batch.shape[0] # * Flag denoting the last microbatch
             t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
 
             ema, num_scales = self.ema_scale_fn(self.global_step)
@@ -489,7 +489,7 @@ class CMTrainLoop(TrainLoop):
             elif self.training_mode == "consistency_training":
                 compute_losses = functools.partial(
                     self.diffusion.consistency_losses,
-                    self.ddp_model,
+                    self.ddp_model, # ! Distributed parallel model if possible
                     micro,
                     num_scales,
                     target_model=self.target_model,

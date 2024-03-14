@@ -2,7 +2,7 @@
 # Training EDM models on class-conditional ImageNet-64, and LSUN 256
 ####################################################################
 
-mpiexec -n 8 python edm_train.py --attention_resolutions 32,16,8 --class_cond True --use_scale_shift_norm True --dropout 0.1 --ema_rate 0.999,0.9999,0.9999432189950708 --global_batch_size 4096 --image_size 64 --lr 0.0001 --num_channels 192 --num_head_channels 64 --num_res_blocks 3 --resblock_updown True --schedule_sampler lognormal --use_fp16 True --weight_decay 0.0 --weight_schedule karras --data_dir /path/to/imagenet
+mpiexec -n 8 python edm_train.py --attention_resolutions 32,16,8 --class_cond True --use_scale_shift_norm True --dropout 0.1 --ema_rate 0.999,0.9999,0.9999432189950708 --global_batch_size 4096 --image_size 64 --lr 0.0001 --num_channels 192 --num_head_channels 64 --num_res_blocks 3 --resblock_updown True --schedule_sampler lognormal --use_fp16 True --weight_decay 0.0 --weight_schedule karras --data_dir --data_dir ~/hpc-share/AdvancedPGM/data/imagenet64-class
 
 python -m orc.diffusion.scripts.train_imagenet_edm --attention_resolutions 32,16,8 --class_cond False --dropout 0.1 --ema_rate 0.999,0.9999,0.9999432189950708 --global_batch_size 256 --image_size 256 --lr 0.0001 --num_channels 256 --num_head_channels 64 --num_res_blocks 2 --resblock_updown True --schedule_sampler lognormal --use_fp16 True --use_scale_shift_norm False --weight_decay 0.0 --weight_schedule karras --data_dir /path/to/lsun_bedroom
 
@@ -35,7 +35,7 @@ mpiexec -n 8 python cm_train.py --training_mode consistency_distillation --sigma
 #########################################################################
 
 ## L_CT^N on ImageNet-64
-mpiexec -n 8 python cm_train.py --training_mode consistency_training --target_ema_mode adaptive --start_ema 0.95 --scale_mode progressive --start_scales 2 --end_scales 200 --total_training_steps 12000 --loss_norm lpips --lr_anneal_steps 0 --teacher_model_path ../teacher-models/edm_imagenet64_ema.pt --attention_resolutions 32,16,8 --class_cond True --use_scale_shift_norm True --dropout 0.0 --teacher_dropout 0.1 --ema_rate 0.999,0.9999,0.9999432189950708 --global_batch_size 2048 --image_size 64 --lr 0.0001 --num_channels 192 --num_head_channels 64 --num_res_blocks 3 --resblock_updown True --schedule_sampler uniform --use_fp16 True --weight_decay 0.0 --weight_schedule uniform --data_dir ~/hpc-share/AdvancedPGM/data/imagenet64-class
+mpiexec -n 8 python cm_train.py --training_mode consistency_training --target_ema_mode adaptive --start_ema 0.95 --scale_mode progressive --start_scales 2 --end_scales 200 --total_training_steps 12000 --loss_norm lpips --lr_anneal_steps 0 --teacher_model_path ../teacher-models/edm_imagenet64_ema.pt --attention_resolutions 32,16,8 --class_cond True --use_scale_shift_norm True --dropout 0.0 --teacher_dropout 0.1 --ema_rate 0.999,0.9999,0.9999432189950708 --global_batch_size 128 --image_size 64 --lr 0.0001 --num_channels 192 --num_head_channels 64 --num_res_blocks 3 --resblock_updown True --schedule_sampler uniform --use_fp16 True --weight_decay 0.0 --weight_schedule uniform --data_dir ~/hpc-share/AdvancedPGM/data/imagenet64-class
 
 ## L_CT^N on LSUN 256
 mpiexec -n 8 python cm_train.py --training_mode consistency_training --target_ema_mode adaptive --start_ema 0.95 --scale_mode progressive --start_scales 2 --end_scales 150 --total_training_steps 1000000 --loss_norm lpips --lr_anneal_steps 0 --teacher_model_path /path/to/edm_bedroom256_ema.pt --attention_resolutions 32,16,8 --class_cond False --use_scale_shift_norm False --dropout 0.0 --teacher_dropout 0.1 --ema_rate 0.9999,0.99994,0.9999432189950708 --global_batch_size 256 --image_size 256 --lr 0.00005 --num_channels 256 --num_head_channels 64 --num_res_blocks 2 --resblock_updown True --schedule_sampler uniform --use_fp16 True --weight_decay 0.0 --weight_schedule uniform --data_dir /path/to/bedroom256
@@ -90,3 +90,30 @@ mpiexec -n 8 python image_sample.py --batch_size 32 --training_mode consistency_
 
 ## Two-step sampling for CT on LSUN Cat-256
 mpiexec -n 8 python image_sample.py --batch_size 32 --training_mode consistency_distillation --sampler multistep --ts 0,62,150 --steps 151 --model_path /path/to/ct_cat256.pt --attention_resolutions 32,16,8 --class_cond False --use_scale_shift_norm False --dropout 0.0 --image_size 256 --num_channels 256 --num_head_channels 64 --num_res_blocks 2 --num_samples 500 --resblock_updown True --use_fp16 True --weight_schedule uniform
+
+
+
+
+
+python cm_train.py --training_mode consistency_training --target_ema_mode adaptive --start_ema 0.95 --scale_mode progressive --start_scales 2 --end_scales 200 --total_training_steps 12000 --loss_norm lpips --lr_anneal_steps 0 --teacher_model_path ../teacher-models/edm_imagenet64_ema.pt --attention_resolutions 32,16,8 --class_cond True --use_scale_shift_norm True --dropout 0.0 --teacher_dropout 0.1 --ema_rate 0.999,0.9999,0.9999432189950708 --global_batch_size 128 --image_size 64 --lr 0.0001 --num_channels 192 --num_head_channels 64 --num_res_blocks 3 --resblock_updown True --schedule_sampler uniform --use_fp16 True --weight_decay 0.0 --weight_schedule uniform --data_dir ~/hpc-share/AdvancedPGM/data/imagenet64-class
+python cm_train.py --training_mode progdist --target_ema_mode adaptive --start_ema 0.95 --scale_mode progressive --start_scales 2 --end_scales 200 --total_training_steps 12000 --loss_norm lpips --lr_anneal_steps 0 --teacher_model_path ../teacher-models/edm_imagenet64_ema.pt --attention_resolutions 32,16,8 --class_cond True --use_scale_shift_norm True --dropout 0.0 --teacher_dropout 0.1 --ema_rate 0.999,0.9999,0.9999432189950708 --global_batch_size 128 --image_size 64 --lr 0.0001 --num_channels 192 --num_head_channels 64 --num_res_blocks 3 --resblock_updown True --schedule_sampler uniform --use_fp16 True --weight_decay 0.0 --weight_schedule uniform --data_dir ~/hpc-share/AdvancedPGM/data/imagenet64-class
+
+
+python cm_train.py --training_mode consistency_training --target_ema_mode adaptive --start_ema 0.95 --scale_mode progressive --start_scales 2 --end_scales 200 --total_training_steps 120000 --loss_norm lpips --lr_anneal_steps 0 --attention_resolutions 32,16,8 --class_cond True --use_scale_shift_norm True --dropout 0.0 --teacher_dropout 0.1 --ema_rate 0.999,0.9999,0.9999432189950708 --global_batch_size 128 --image_size 64 --lr 0.0001 --num_channels 192 --num_head_channels 64 --num_res_blocks 3 --resblock_updown True --schedule_sampler uniform --use_fp16 True --weight_decay 0.0 --weight_schedule uniform --data_dir ~/hpc-share/AdvancedPGM/data/imagenet64-class
+
+
+# One step sampling in our consistency trained model on imagenet64
+cd ~/OSU/Codes/AI539-AdvancedPGM/consistency_models/scripts; python image_sample.py --batch_size 256 --training_mode consistency_distillation --sampler onestep --model_path /nfs/stak/users/shresthr/hpc-share/scratch/shresthr/AI539-AdvancedPGM/tmp/model090000.pt --attention_resolutions 32,16,8 --class_cond True --use_scale_shift_norm True --dropout 0.0 --image_size 64 --num_channels 192 --num_head_channels 64 --num_res_blocks 3 --num_samples 500 --resblock_updown True --use_fp16 True --weight_schedule uniform
+
+# Multi step sampling in our consistency trained model on imagenet64
+cd ~/OSU/Codes/AI539-AdvancedPGM/consistency_models/scripts; python image_sample.py --batch_size 256 --training_mode consistency_distillation --sampler multistep --ts 0,22,39 --steps 40 --model_path /nfs/stak/users/shresthr/hpc-share/scratch/shresthr/AI539-AdvancedPGM/tmp/model090000.pt --attention_resolutions 32,16,8 --class_cond True --use_scale_shift_norm True --dropout 0.0 --image_size 64 --num_channels 192 --num_head_channels 64 --num_res_blocks 3 --num_samples 500 --resblock_updown True --use_fp16 True --weight_schedule uniform
+
+
+# One step sampling in pretrained model on imagenet64
+cd ~/OSU/Codes/AI539-AdvancedPGM/consistency_models/scripts; python image_sample.py --batch_size 256 --training_mode consistency_distillation --sampler onestep --model_path /nfs/stak/users/shresthr/hpc-share/AdvancedPGM/pretrained-models/ct_imagenet64.pt --attention_resolutions 32,16,8 --class_cond True --use_scale_shift_norm True --dropout 0.0 --image_size 64 --num_channels 192 --num_head_channels 64 --num_res_blocks 3 --num_samples 500 --resblock_updown True --use_fp16 True --weight_schedule uniform
+
+
+# Multi step sampling in pretrained model on imagenet64
+cd ~/OSU/Codes/AI539-AdvancedPGM/consistency_models/scripts; python image_sample.py --batch_size 256 --training_mode consistency_distillation --sampler multistep --ts 0,22,39 --steps 40 --model_path /nfs/stak/users/shresthr/hpc-share/AdvancedPGM/pretrained-models/ct_imagenet64.pt --attention_resolutions 32,16,8 --class_cond True --use_scale_shift_norm True --dropout 0.0 --image_size 64 --num_channels 192 --num_head_channels 64 --num_res_blocks 3 --num_samples 500 --resblock_updown True --use_fp16 True --weight_schedule uniform
+
+

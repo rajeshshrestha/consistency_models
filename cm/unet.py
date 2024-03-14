@@ -357,7 +357,7 @@ class QKVFlashAttention(nn.Module):
         assert self.head_dim in [16, 32, 64], "Only support head_dim == 16, 32, or 64"
 
         self.inner_attn = FlashAttention(
-            attention_dropout=attention_dropout, **factory_kwargs
+            attention_dropout=attention_dropout,
         )
         self.rearrange = rearrange
 

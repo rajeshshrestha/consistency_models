@@ -25,7 +25,9 @@ def main():
     args = create_argparser().parse_args()
 
     dist_util.setup_dist()
-    logger.configure(dir="/scratch/shresthr/AI539-AdvancedPGM/tmp")
+    logger.configure(dir="~/hpc-share/scratch/shresthr/AI539-AdvancedPGM/tmp-dgx2")
+    # logger.configure(dir="/scratch/shresthr/AI539-AdvancedPGM/tmp")
+    
 
     logger.log("creating model and diffusion...")
     ema_scale_fn = create_ema_and_scales_fn(
@@ -100,11 +102,11 @@ def main():
         teacher_diffusion = None
 
     # load the target model for distillation, if path specified.
-
+    # ! Same as model and diffusion in line 51. Could be the model for using the ema weights and frozen during training.
     logger.log("creating the target model")
     target_model, _ = create_model_and_diffusion(
         **model_and_diffusion_kwargs,
-    )
+    ) 
 
     target_model.to(dist_util.dev())
     target_model.train()
@@ -112,6 +114,7 @@ def main():
     dist_util.sync_params(target_model.parameters())
     dist_util.sync_params(target_model.buffers())
 
+    # * Copy the model parameters to the target model.
     for dst, src in zip(target_model.parameters(), model.parameters()):
         dst.data.copy_(src.data)
 
@@ -127,7 +130,7 @@ def main():
         training_mode=args.training_mode,
         ema_scale_fn=ema_scale_fn,
         total_training_steps=args.total_training_steps,
-        diffusion=diffusion,
+        diffusion=diffusion, # ? Why is this diffusion model required?.
         data=data,
         batch_size=batch_size,
         microbatch=args.microbatch,
@@ -156,7 +159,7 @@ def create_argparser():
         microbatch=-1,  # -1 disables microbatches
         ema_rate="0.9999",  # comma-separated list of EMA values
         log_interval=10,
-        save_interval=10000,
+        save_interval=5000,
         resume_checkpoint="",
         use_fp16=False,
         fp16_scale_growth=1e-3,
